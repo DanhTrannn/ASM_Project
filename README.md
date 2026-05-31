@@ -1,52 +1,89 @@
 # NASM System Info Viewer
 
-Terminal User Interface (TUI) xem thong tin he thong Linux x86-64 bang NASM,
-libc va ncursesw. Project nay bam theo SRS trong `SRS_NASM_PROJECT_G7.docx`
-va tao giao dien thuc te de chup man hinh demo.
+A Linux x86-64 Terminal User Interface (TUI) application written in NASM
+Assembly and linked with libc and ncursesw. The project follows the
+requirements described in `SRS_NASM_PROJECT_G7.docx` and provides a real
+terminal UI that can be used for demos and screenshots.
 
-## Yeu cau
+## Requirements
 
-Ubuntu/Debian/WSL:
+On Ubuntu, Debian, or WSL:
 
 ```sh
 sudo apt update
 sudo apt install -y nasm gcc make libncursesw5-dev
 ```
 
-## Build va chay
+## Build And Run
+
+From the project directory:
 
 ```sh
 make
 ./system_info
 ```
 
-Hoac:
+Or run it through Make:
 
 ```sh
 make run
 ```
 
-## Chuc nang
+To rebuild from scratch:
 
-- Menu TUI bang ncursesw
-- CPU: CPUID, brand string, feature flags co ban, RDTSC
-- Memory: doc `/proc/meminfo`
-- Disk: doc `/proc/partitions`
-- BIOS/Firmware: doc `/sys/class/dmi/id`
-- OS: doc `/etc/os-release` va `uname`
-- Network: doc `/sys/class/net`
-- Time: goi `time`, `localtime`, `strftime`
-- Export report: ghi `system_report.txt`
+```sh
+make clean
+make
+./system_info
+```
 
-## Phim dieu khien
+## Features
 
-- `Up/Down` hoac `k/j`: di chuyen menu
-- `Enter`: chon chuc nang
-- `b`: quay lai menu
-- `q`: thoat
+- ncursesw-based main menu
+- CPU information using CPUID, CPU brand string, basic feature flags, and RDTSC
+- Memory information from `/proc/meminfo`
+- Disk information from `/proc/partitions`
+- BIOS/Firmware information from `/sys/class/dmi/id`
+- OS information from `/etc/os-release` and `uname`
+- Network interface information from `/sys/class/net`
+- System date, time, and timezone
+- Report export to `system_report.txt`
 
-## Chup man hinh
+## Timezone Detection
 
-Chay `./system_info` trong terminal co kich thuoc toi thieu 80x24, sau do dung
-cong cu screenshot cua he dieu hanh. Neu dung GNOME Terminal, nen phong to font
-monospace vua phai de khung 80 cot hien day du.
+The Time screen first tries to read the configured IANA timezone from:
+
+1. `/etc/timezone`
+2. `/etc/localtime` if it is a symlink to `/usr/share/zoneinfo/...`
+
+If neither source is available, it falls back to the libc timezone offset from
+`strftime`, such as `+07 +0700`.
+
+## Controls
+
+- `Up` / `Down` or `k` / `j`: move through the menu
+- `Enter`: open the selected screen
+- `b`: go back to the main menu
+- `q`: quit the application
+
+## Report Export
+
+Select `9. Xuat bao cao` in the menu to generate:
+
+```text
+system_report.txt
+```
+
+The report includes CPU, memory, disk, BIOS/Firmware, OS, network, time, and
+timezone information.
+
+## Taking Screenshots
+
+Run the application in a terminal with a minimum size of 80 columns by 24 rows:
+
+```sh
+./system_info
+```
+
+Then use your operating system's screenshot tool. For a cleaner result, use a
+monospace terminal font and keep the window wide enough for the 80-column UI.
