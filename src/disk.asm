@@ -2,6 +2,8 @@ default rel
 
 global show_disk
 global export_disk
+global collect_disk_summary
+global disk_summary
 
 extern draw_base
 extern print_line
@@ -10,6 +12,9 @@ extern fopen
 extern fgets
 extern fclose
 extern sscanf
+extern snprintf
+extern strcpy
+extern strcat
 extern mvprintw
 extern fprintf
 
@@ -25,6 +30,10 @@ report_section db 10, "[DISK]", 10, 0
 report_header db "DEVICE             SIZE(MB)     MAJ:MIN", 10, 0
 report_row db "%-16s %10llu     %3llu:%-3llu", 10, 0
 report_na db "Not available", 10, 0
+summary_na db "Not available", 0
+summary_sep db " | ", 0
+summary_more db " ...", 0
+summary_item_fmt db "%.10s:%lluM", 0
 
 section .bss
 line_buf resb 256
@@ -32,6 +41,8 @@ dev_name resb 64
 major_no resq 1
 minor_no resq 1
 blocks_no resq 1
+disk_summary resb 256
+summary_item resb 64
 
 section .text
 parse_partition:
@@ -48,6 +59,85 @@ parse_partition:
 	cmp eax, 4
 	sete al
 	movzx eax, al
+	leave
+	ret
+
+collect_disk_summary:
+	push rbp
+	mov rbp, rsp
+	push rbx
+	push r12
+
+	lea rdi, [disk_summary]
+	lea rsi, [summary_na]
+	call strcpy
+
+	lea rdi, [path_partitions]
+	lea rsi, [mode_r]
+	call fopen
+	test rax, rax
+	jz .done
+	mov rbx, rax
+	mov byte [disk_summary], 0
+	xor r12d, r12d
+
+.loop:
+	lea rdi, [line_buf]
+	mov esi, 256
+	mov rdx, rbx
+	call fgets
+	test rax, rax
+	jz .close
+	call parse_partition
+	test eax, eax
+	jz .loop
+
+	cmp r12d, 2
+	jb .append_item
+	lea rdi, [disk_summary]
+	lea rsi, [summary_more]
+	call strcat
+	jmp .close
+
+.append_item:
+	mov rax, [blocks_no]
+	xor edx, edx
+	mov rcx, 1024
+	div rcx
+
+	lea rdi, [summary_item]
+	mov esi, 64
+	lea rdx, [summary_item_fmt]
+	lea rcx, [dev_name]
+	mov r8, rax
+	xor eax, eax
+	call snprintf
+
+	test r12d, r12d
+	jz .copy_item
+	lea rdi, [disk_summary]
+	lea rsi, [summary_sep]
+	call strcat
+
+.copy_item:
+	lea rdi, [disk_summary]
+	lea rsi, [summary_item]
+	call strcat
+	inc r12d
+	jmp .loop
+
+.close:
+	mov rdi, rbx
+	call fclose
+	test r12d, r12d
+	jnz .done
+	lea rdi, [disk_summary]
+	lea rsi, [summary_na]
+	call strcpy
+
+.done:
+	pop r12
+	pop rbx
 	leave
 	ret
 

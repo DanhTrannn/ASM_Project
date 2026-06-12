@@ -10,6 +10,8 @@ extern collect_memory
 extern collect_bios
 extern collect_os
 extern collect_time
+extern collect_disk_summary
+extern collect_network_summary
 extern cpu_vendor
 extern cpu_brand
 extern cpu_features
@@ -21,6 +23,8 @@ extern os_pretty
 extern os_kernel
 extern time_text
 extern timezone_text
+extern disk_summary
+extern network_summary
 extern mvprintw
 
 section .rodata
@@ -31,7 +35,9 @@ fmt_mem db "[MEMORY] Total %s | Available %s | SwapFree %s", 0
 fmt_bios db "[BIOS] %s", 0
 fmt_os db "[OS] %s | Kernel %s", 0
 fmt_time db "[TIME] %s | %s", 0
-hint db "Chi tiet Disk/Network xem trong menu rieng; PgUp/PgDn co the bo sung sau.", 0
+fmt_disk db "[DISK] %s", 0
+fmt_network db "[NETWORK] %s", 0
+hint db "Xem menu va chon rieng tung chuc nang de xem chi tiet hon", 0
 
 section .text
 show_all:
@@ -43,6 +49,8 @@ show_all:
 	call collect_bios
 	call collect_os
 	call collect_time
+	call collect_disk_summary
+	call collect_network_summary
 
 	lea rdi, [title_showall]
 	call draw_base
@@ -94,7 +102,21 @@ show_all:
 	xor eax, eax
 	call mvprintw
 
-	mov edi, 18
+	mov edi, 16
+	mov esi, 4
+	lea rdx, [fmt_disk]
+	lea rcx, [disk_summary]
+	xor eax, eax
+	call mvprintw
+
+	mov edi, 17
+	mov esi, 4
+	lea rdx, [fmt_network]
+	lea rcx, [network_summary]
+	xor eax, eax
+	call mvprintw
+
+	mov edi, 19
 	mov esi, 4
 	lea rdx, [hint]
 	call print_line
